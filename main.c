@@ -28,13 +28,7 @@ void send_sigusr1(int proc_num, int pid);
 
 void send_sigusr1_g(int proc_num, int group);
 
-void send_sigusr2(int proc_num, int pid);
-
-void send_sigusr2_g(int proc_num, int group);
-
 void sigusr1_received();
-
-void sigusr2_received();
 
 void sigterm_received();
 
@@ -69,31 +63,27 @@ void sigterm6(int sig_num) {
 }
 
 void sigterm5(int sig_num) {
+    int first_pid = read_pid(FILES[1]);
+    killpg(first_pid, SIGTERM);
+    for (int i = 0; i < 3; ++i) {
+        wait(0);
+    }
     sigterm_received();
     exit(0);
 }
 
 void sigterm4(int sig_num) {
     sigterm_received();
-    int eighth_pid = read_pid(FILES[8]);
-    kill(eighth_pid, SIGTERM);
-    wait(0);
     exit(0);
 }
 
 void sigterm3(int sig_num) {
     sigterm_received();
-    int seventh_pid = read_pid(FILES[7]);
-    kill(seventh_pid, SIGTERM);
-    wait(0);
     exit(0);
 }
 
 void sigterm2(int sig_num) {
     sigterm_received();
-    int sixth_pid = read_pid(FILES[6]);
-    kill(sixth_pid, SIGTERM);
-    wait(0);
     exit(0);
 }
 
@@ -125,7 +115,6 @@ void fifth_sigusr1(int sig_num) {
     ready4 = 0;
     int first_pid = read_pid(FILES[1]);
     send_sigusr1_g(5, first_pid);
-    int seventh_pid = read_pid(FILES[7]);
 }
 
 void fourth_sigusr1(int sig_num) {
@@ -218,6 +207,7 @@ void init8() {
 
 void init7() {
     curr_proc_num = 7;
+
     set_handler(SIGUSR1, seventh_sigusr1);
     set_handler(SIGUSR2, six_ready);
     set_handler(SIGTERM, sigterm7);
@@ -394,6 +384,7 @@ void init1() {
     } else if (second_pid == 0) {
         init2();
     }
+
     if (setpgid(second_pid, second_pid) == -1) {
         fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
     }
@@ -500,27 +491,8 @@ void send_sigusr1(int proc_num, int pid) {
     sigusr1_am++;
 }
 
-void send_sigusr2(int proc_num, int pid) {
-    fprintf(stdout, "%d %d %d sent SIGUSR2 %d\n", proc_num, getpid(), getppid(), get_time());
-    fflush(stdout);
-    kill(pid, SIGUSR2);
-    sigusr2_am++;
-}
-
-void send_sigusr2_g(int proc_num, int group) {
-    fprintf(stdout, "%d %d %d sent SIGUSR2 %d\n", proc_num, getpid(), getppid(), get_time());
-    fflush(stdout);
-    killpg(group, SIGUSR2);
-    sigusr2_am++;
-}
-
 void sigusr1_received() {
     fprintf(stdout, "%d %d %d received SIGUSR1 %d\n", curr_proc_num, getpid(), getppid(), get_time());
-    fflush(stdout);
-}
-
-void sigusr2_received() {
-    fprintf(stdout, "%d %d %d received SIGUSR2 %d\n", curr_proc_num, getpid(), getppid(), get_time());
     fflush(stdout);
 }
 
