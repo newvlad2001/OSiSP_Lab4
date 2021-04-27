@@ -1,5 +1,5 @@
 //1->2 2->3 3->(4,5,6) 6->7 4->8
-//1->(8,7) SIGUSR1 8->(6,5) SIGUSR1 5->(4,3,2) SIGUSR2 2->1 SIGUSR2
+//1->(2,3,4,5) SIGUSR1 5->(6,7,8) SIGUSR1 8->1 SIGUSR1
 
 #define _GNU_SOURCE
 #define PRINT_TREE
@@ -24,6 +24,8 @@ int read_pid(const char filename[]);
 
 int get_time();
 
+void send_sigusr1(int proc_num, int pid);
+
 void send_sigusr1_g(int proc_num, int group);
 
 void send_sigusr2(int proc_num, int pid);
@@ -43,6 +45,7 @@ int curr_proc_num = 0;
 int first_received = 0;
 int sigusr1_am = 0;
 int sigusr2_am = 0;
+int ready2 = 0;
 int ready3 = 0;
 int ready4 = 0;
 int ready6 = 0;
@@ -51,12 +54,6 @@ int ready7 = 0;
 //HANDLERS------------------------------------------------
 
 void sigterm8(int sig_num) {
-
-    int fifth_pid = read_pid(FILES[5]);
-    killpg(fifth_pid, SIGTERM);
-    for (int i = 0; i < 2; ++i) {
-        wait(0);
-    }
     sigterm_received();
     exit(0);
 }
@@ -72,105 +69,118 @@ void sigterm6(int sig_num) {
 }
 
 void sigterm5(int sig_num) {
-
-    int second_pid = read_pid(FILES[2]);
-    killpg(second_pid, SIGTERM);
-    for (int i = 0; i < 3; ++i) {
-        wait(0);
-    }
     sigterm_received();
     exit(0);
 }
 
 void sigterm4(int sig_num) {
     sigterm_received();
+    int eighth_pid = read_pid(FILES[8]);
+    kill(eighth_pid, SIGTERM);
+    wait(0);
     exit(0);
 }
 
 void sigterm3(int sig_num) {
     sigterm_received();
+    int seventh_pid = read_pid(FILES[7]);
+    kill(seventh_pid, SIGTERM);
+    wait(0);
     exit(0);
 }
 
 void sigterm2(int sig_num) {
     sigterm_received();
+    int sixth_pid = read_pid(FILES[6]);
+    kill(sixth_pid, SIGTERM);
+    wait(0);
     exit(0);
 }
 
 void eighth_sigusr1(int sig_num) {
     sigusr1_received();
-    int fifth_pid = read_pid(FILES[5]);
-    while (ready7 == 0) {};
+    while (ready7 == 0) {}
     ready7 = 0;
-    send_sigusr1_g(8, fifth_pid);
+    int first_pid = read_pid(FILES[1]);
+    send_sigusr1(8, first_pid);
 }
 
 void seventh_sigusr1(int sig_num) {
     sigusr1_received();
+    while (ready6 == 0) {}
+    ready6 = 0;
     int eighth_pid = read_pid(FILES[8]);
     kill(eighth_pid, SIGUSR2);
 }
 
 void sixth_sigusr1(int sig_num) {
     sigusr1_received();
-    int fifth_pid = read_pid(FILES[5]);
-    kill(fifth_pid, SIGUSR2);
+    int seventh_pid = read_pid(FILES[7]);
+    kill(seventh_pid, SIGUSR2);
 }
 
 void fifth_sigusr1(int sig_num) {
     sigusr1_received();
-    int second_pid = read_pid(FILES[2]);
-    while (ready6 == 0) {}
-    ready6 = 0;
-    send_sigusr2_g(5, second_pid);
-}
-
-void fourth_sigusr2(int sig_num) {
-    sigusr2_received();
-    int third_pid = read_pid(FILES[3]);
-    kill(third_pid, SIGUSR1);
-
-}
-
-void third_sigusr2(int sig_num) {
-    sigusr2_received();
-    int second_pid = read_pid(FILES[2]);
-    kill(second_pid, SIGUSR1);
-}
-
-void second_sigusr2(int sig_num) {
-    sigusr2_received();
+    while (ready4 == 0) {}
+    ready4 = 0;
     int first_pid = read_pid(FILES[1]);
-    send_sigusr2(2, first_pid);
+    send_sigusr1_g(5, first_pid);
+    int seventh_pid = read_pid(FILES[7]);
+}
+
+void fourth_sigusr1(int sig_num) {
+    sigusr1_received();
+    while (ready3 == 0) {}
+    ready3 = 0;
+    int fifth_pid = read_pid(FILES[5]);
+    kill(fifth_pid, SIGUSR2);
+}
+
+void third_sigusr1(int sig_num) {
+    sigusr1_received();
+    while (ready2 == 0) {}
+    ready2 = 0;
+    int fourth_pid = read_pid(FILES[4]);
+    kill(fourth_pid, SIGUSR2);
+}
+
+void second_sigusr1(int sig_num) {
+    sigusr1_received();
+    int third_pid = read_pid(FILES[3]);
+    kill(third_pid, SIGUSR2);
 }
 
 
-void first_sigusr2(int sig_num) {
-    sigusr2_received();
+void first_sigusr1(int sig_num) {
+    sigusr1_received();
 
     first_received++;
-    int seventh_pid = read_pid(FILES[7]);
+    int second_pid = read_pid(FILES[2]);
     if (first_received == 101) {
-        killpg(seventh_pid, SIGTERM);
-        for (int i = 0; i < 2; i++) {
+        killpg(second_pid, SIGTERM);
+        for (int i = 0; i < 4; i++) {
             wait(0);
         }
         sigterm_received();
         exit(0);
     }
 
-    send_sigusr1_g(1, seventh_pid);
+    send_sigusr1_g(1, second_pid);
 }
 
 void third_ready(int sig_num) {
     ready3 = 1;
 }
 
+void second_ready(int sig_num) {
+    ready2 = 1;
+}
+
 void fourth_ready(int sig_num) {
     ready4 = 1;
 }
 
-void sixth_ready(int sig_num) {
+void six_ready(int sig_num) {
     ready6 = 1;
 }
 
@@ -208,8 +218,8 @@ void init8() {
 
 void init7() {
     curr_proc_num = 7;
-
     set_handler(SIGUSR1, seventh_sigusr1);
+    set_handler(SIGUSR2, six_ready);
     set_handler(SIGTERM, sigterm7);
 
     write_pid(getpid(), FILES[7]);
@@ -233,7 +243,8 @@ void init6() {
         init7();
     }
 
-    if (setpgid(seventh_pid, seventh_pid) == -1) {
+    int first_pid = read_pid(FILES[1]);
+    if (setpgid(seventh_pid, first_pid) == -1) {
         fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
     }
 
@@ -249,7 +260,7 @@ void init5() {
     curr_proc_num = 5;
 
     set_handler(SIGUSR1, fifth_sigusr1);
-    set_handler(SIGUSR2, sixth_ready);
+    set_handler(SIGUSR2, fourth_ready);
     set_handler(SIGTERM, sigterm5);
 
     write_pid(getpid(), FILES[5]);
@@ -262,7 +273,8 @@ void init5() {
 void init4() {
     curr_proc_num = 4;
 
-    set_handler(SIGUSR2, fourth_sigusr2);
+    set_handler(SIGUSR1, fourth_sigusr1);
+    set_handler(SIGUSR2, third_ready);
     set_handler(SIGTERM, sigterm4);
 
     int eighth_pid = fork();
@@ -273,13 +285,12 @@ void init4() {
         init8();
     }
 
-    struct stat buf;
-    while (lstat(FILES[7], &buf) == -1) {}
-
-    int seventh_pid = read_pid(FILES[7]);
-    if (setpgid(eighth_pid, seventh_pid) == -1) {
+    int first_pid = read_pid(FILES[1]);
+    if (setpgid(eighth_pid, first_pid) == -1) {
         fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
     }
+    struct stat buf;
+    while (lstat(FILES[7], &buf) == -1) {}
 
     write_pid(getpid(), FILES[4]);
 
@@ -291,9 +302,10 @@ void init4() {
 void init3() {
     curr_proc_num = 3;
 
-    set_handler(SIGUSR2, third_sigusr2);
-    set_handler(SIGUSR1, fourth_ready);
+    set_handler(SIGUSR1, third_sigusr1);
+    set_handler(SIGUSR2, second_ready);
     set_handler(SIGTERM, sigterm3);
+    write_pid(getpid(), FILES[3]);
 
     int fourth_pid = fork();
     if (fourth_pid == -1) {
@@ -303,13 +315,6 @@ void init3() {
         init4();
     }
 
-    struct stat buf;
-    while (lstat(FILES[2], &buf) == -1) {}
-
-    int second_pid = read_pid(FILES[2]);
-    if (setpgid(fourth_pid, second_pid) == -1) {
-        fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
-    }
 
     int fifth_pid = fork();
     if (fifth_pid == -1) {
@@ -319,9 +324,6 @@ void init3() {
         init5();
     }
 
-    if (setpgid(fifth_pid, fifth_pid) == -1) {
-        fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
-    }
 
     int sixth_pid = fork();
     if (sixth_pid == -1) {
@@ -331,11 +333,19 @@ void init3() {
         init6();
     }
 
-    if (setpgid(sixth_pid, fifth_pid) == -1) {
+    int first_pid = read_pid(FILES[1]);
+    if (setpgid(sixth_pid, first_pid) == -1) {
         fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
     }
 
-    write_pid(getpid(), FILES[3]);
+    int second_pid = read_pid(FILES[2]);
+    if (setpgid(fourth_pid, second_pid) == -1) {
+        fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
+    }
+
+    if (setpgid(fifth_pid, second_pid) == -1) {
+        fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
+    }
 
     while (1) {
         pause();
@@ -345,9 +355,9 @@ void init3() {
 void init2() {
     curr_proc_num = 2;
 
-    set_handler(SIGUSR2, second_sigusr2);
-    set_handler(SIGUSR1, third_ready);
+    set_handler(SIGUSR1, second_sigusr1);
     set_handler(SIGTERM, sigterm2);
+    write_pid(getpid(), FILES[2]);
 
     int third_pid = fork();
     if (third_pid == -1) {
@@ -357,12 +367,10 @@ void init2() {
         init3();
     }
 
-
     if (setpgid(third_pid, getpid()) == -1) {
         fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
     }
 
-    write_pid(getpid(), FILES[2]);
     while (1) {
         pause();
     }
@@ -371,7 +379,13 @@ void init2() {
 void init1() {
     curr_proc_num = 1;
 
-    set_handler(SIGUSR2, first_sigusr2);
+    set_handler(SIGUSR1, first_sigusr1);
+
+    if (setpgid(getpid(), getpid()) == -1) {
+        fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
+    }
+
+    write_pid(getpid(), FILES[1]);
 
     int second_pid = fork();
     if (second_pid == -1) {
@@ -380,18 +394,19 @@ void init1() {
     } else if (second_pid == 0) {
         init2();
     }
-
     if (setpgid(second_pid, second_pid) == -1) {
         fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
     }
 
-    write_pid(getpid(), FILES[1]);
-
     struct stat buf;
     while (lstat(FILES[8], &buf) == -1) {}
 
-    int seventh_pid = read_pid(FILES[7]);
-    send_sigusr1_g(1, seventh_pid);
+    int zero_pid = read_pid(FILES[0]);
+    if (setpgid(getpid(), zero_pid) == -1) {
+        fprintf(stderr, "%d: %s: %s\n", getpid(), program_invocation_short_name, strerror(errno));
+    }
+
+    send_sigusr1_g(1, second_pid);
 
     while (1) {
         pause();
@@ -475,6 +490,13 @@ void send_sigusr1_g(int proc_num, int group) {
     fprintf(stdout, "%d %d %d sent SIGUSR1 %d\n", proc_num, getpid(), getppid(), get_time());
     fflush(stdout);
     killpg(group, SIGUSR1);
+    sigusr1_am++;
+}
+
+void send_sigusr1(int proc_num, int pid) {
+    fprintf(stdout, "%d %d %d sent SIGUSR1 %d\n", proc_num, getpid(), getppid(), get_time());
+    fflush(stdout);
+    kill(pid, SIGUSR1);
     sigusr1_am++;
 }
 
