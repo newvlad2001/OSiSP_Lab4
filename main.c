@@ -47,7 +47,7 @@ void delete_files() {
     }
 }
 
-void init_action(int sig_num, void (*handler_function)()) {
+void init_action(int sig_num, void (*handler_function)(int)) {
     struct sigaction action;
     memset(&action, 0, sizeof(action));
     action.sa_handler = handler_function;
@@ -130,11 +130,11 @@ void receive_sigterm() {
     fflush(stdout);
 }
 
-void ready8_handler() {
+void ready8_handler(int sig_num) {
     ready8 = 1;
 }
 
-void eighth_proc_handler_sigterm() {
+void eighth_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     int fifth_pid = read_pid_file(FIFTH_PID_FILE);
     killpg(fifth_pid, SIGTERM);
@@ -144,29 +144,29 @@ void eighth_proc_handler_sigterm() {
     exit(EXIT_SUCCESS);
 }
 
-void ready7_handler() {
+void ready7_handler(int sig_num) {
     ready7 = 1;
 }
 
-void seventh_proc_handler_sigterm() {
+void seventh_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     exit(EXIT_SUCCESS);
 }
 
-void ready6_handler() {
+void ready6_handler(int sig_num) {
     ready6 = 1;
 }
 
-void sixth_proc_handler_sigterm() {
+void sixth_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     exit(EXIT_SUCCESS);
 }
 
-void ready5_handler() {
+void ready5_handler(int sig_num) {
     ready5 = 1;
 }
 
-void fifth_proc_handler_sigterm() {
+void fifth_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     int second_pid = read_pid_file(SECOND_PID_FILE);
     killpg(second_pid, SIGTERM);
@@ -176,77 +176,77 @@ void fifth_proc_handler_sigterm() {
     exit(EXIT_SUCCESS);
 }
 
-void ready4_handler() {
+void ready4_handler(int sig_num) {
     ready4 = 1;
 }
 
-void fourth_proc_handler_sigterm() {
+void fourth_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     exit(EXIT_SUCCESS);
 }
 
-void ready3_handler() {
+void ready3_handler(int sig_num) {
     ready3 = 1;
 }
-void third_proc_handler_sigterm() {
+void third_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     exit(EXIT_SUCCESS);
 }
 
-void ready2_handler() {
+void ready2_handler(int sig_num) {
     ready2 = 1;
 }
 
-void second_proc_handler_sigterm() {
+void second_proc_handler_sigterm(int sig_num) {
     receive_sigterm();
     exit(EXIT_SUCCESS);
 }
 
-void eighth_proc_handler_sigusr1() {
+void eighth_proc_handler_sigusr1(int sig_num) {
     receive_sigusr1();
     int fifth_pid = read_pid_file(FIFTH_PID_FILE);
-    while (ready6 == 0) {pause();}
+    while (ready6 == 0) {}
     ready6 = 0;
     send_group_sigusr1(8, fifth_pid);
     int seventh_pid = read_pid_file(SEVENTH_PID_FILE);
     kill(seventh_pid, SIGUSR2);
 }
 
-void seventh_proc_handler_sigusr1() {
+void seventh_proc_handler_sigusr1(int sig_num) {
     receive_sigusr1();
-    while (ready8 == 0) {pause();}
+    while (ready8 == 0) {}
     ready8 = 0;
     int first_pid = read_pid_file(FIRST_PID_FILE);
     kill(first_pid, SIGUSR1);
 }
 
-void sixth_proc_handler_sigusr1() {
+void sixth_proc_handler_sigusr1(int sig_num) {
     receive_sigusr1();
-    while (ready5 == 0 ) {pause();}
+    while (ready5 == 0 ) {}
     ready5 = 0;
     int eighth_pid = read_pid_file(EIGHTH_PID_FILE);
     kill(eighth_pid, SIGUSR2);
 }
 
-void fifth_proc_handler_sigusr1() {
+void fifth_proc_handler_sigusr1(int sig_num) {
     receive_sigusr1();
     int second_pid = read_pid_file(SECOND_PID_FILE);
-    while (ready2 == 0) {pause();}
+    while (ready2 == 0) {}
     ready2 = 0;
     send_group_sigusr2(5, second_pid);
     int sixth_pid = read_pid_file(SIXTH_PID_FILE);
     kill(sixth_pid, SIGUSR2);
 }
 
-void fourth_proc_handler_sigusr2() {
+void fourth_proc_handler_sigusr2(int sig_num) {
     receive_sigusr2();
     int third_pid = read_pid_file(THIRD_PID_FILE);
     kill(third_pid, SIGUSR1);
 }
 
-void third_proc_handler_sigusr2() {
+void third_proc_handler_sigusr2(int sig_num) {
     receive_sigusr2();
-    while (ready4 == 0) {pause();}
+    while (ready4 == 0) {}
     ready4 = 0;
     int second_pid = read_pid_file(SECOND_PID_FILE);
     kill(second_pid, SIGUSR1);
@@ -254,23 +254,23 @@ void third_proc_handler_sigusr2() {
 
 
 
-void second_proc_handler_sigusr2() {
+void second_proc_handler_sigusr2(int sig_num) {
     receive_sigusr2();
     int first_pid = read_pid_file(FIRST_PID_FILE);
     send_sigusr2(2, first_pid);
-    while (ready3 == 0) {pause();}
+    while (ready3 == 0) {}
     ready3 = 0;
     int fifth_pid = read_pid_file(FIFTH_PID_FILE);
     kill(fifth_pid, SIGUSR2);
 }
 
 
-void first_proc_handler_sigusr2() {
+void first_proc_handler_sigusr2(int sig_num) {
     receive_sigusr2();
 
     recieved_by_first++;
     int seventh_pid = read_pid_file(SEVENTH_PID_FILE);
-    while (ready7 == 0) {pause();}
+    while (ready7 == 0) {}
     ready7 = 0;
     if (recieved_by_first == 101) {
         killpg(seventh_pid, SIGTERM);
